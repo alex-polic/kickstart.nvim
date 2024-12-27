@@ -71,15 +71,6 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
-function MyStatusLine()
-  local rest = ' %m %r %w%=%y %l:%c '
-  if vim.fn.expand '%:~:.' == '' or vim.bo.buftype ~= '' then
-    return '%t' .. rest
-  end
-  return vim.fn.expand '%:~:.' .. rest
-end
-
-vim.opt.statusline = '%!v:lua.MyStatusLine()'
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
