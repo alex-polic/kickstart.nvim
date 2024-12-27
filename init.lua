@@ -71,6 +71,15 @@ vim.opt.cursorline = true
 -- Minimal number of screen lines to keep above and below the cursor.
 vim.opt.scrolloff = 10
 
+function MyStatusLine()
+  local rest = ' %m %r %w%=%y %l:%c '
+  if vim.fn.expand '%:~:.' == '' or vim.bo.buftype ~= '' then
+    return '%t' .. rest
+  end
+  return vim.fn.expand '%:~:.' .. rest
+end
+
+vim.opt.statusline = '%!v:lua.MyStatusLine()'
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 
@@ -283,6 +292,24 @@ require('lazy').setup({
 
       -- [[ Configure Telescope ]]
       -- See `:help telescope` and `:help telescope.setup()`
+      vim.api.nvim_create_autocmd('FileType', {
+        pattern = 'TelescopeResults',
+        callback = function(ctx)
+          vim.api.nvim_buf_call(ctx.buf, function()
+            vim.fn.matchadd('TelescopeParent', '\t\t.*$')
+            vim.api.nvim_set_hl(0, 'TelescopeParent', { link = 'Comment' })
+          end)
+        end,
+      })
+
+      local function filenameFirst(_, path)
+        local tail = vim.fs.basename(path)
+        local parent = vim.fs.dirname(path)
+        if parent == '.' then
+          return tail
+        end
+        return string.format('%s\t\t%s', tail, parent)
+      end
       require('telescope').setup {
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
@@ -293,6 +320,15 @@ require('lazy').setup({
         --   },
         -- },
         -- pickers = {}
+        pickers = {
+          find_files = {
+            path_display = filenameFirst,
+          },
+        },
+
+        defaults = {
+          layout_strategy = 'horizontal',
+        },
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
