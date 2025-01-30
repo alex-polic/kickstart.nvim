@@ -4,8 +4,27 @@
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
+vim.cmd 'set expandtab'
+vim.cmd 'set tabstop=2'
+vim.cmd 'set softtabstop=2'
+vim.cmd 'set shiftwidth=2'
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
+
+-- Check and create .rgignore if it doesn't exist
+local home = os.getenv 'HOME'
+local rgignore_path = home .. '/.rgignore'
+local rgignore_file = io.open(rgignore_path, 'r')
+
+if not rgignore_file then
+  rgignore_file = io.open(rgignore_path, 'w')
+  if rgignore_file then
+    rgignore_file:write '!.env*\n'
+    rgignore_file:close()
+  end
+else
+  rgignore_file:close()
+end
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -77,6 +96,7 @@ vim.opt.scrolloff = 10
 -- Clear highlights on search when pressing <Esc> in normal mode
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
+vim.keymap.set('n', '<Esc>', '<cmd>w<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
@@ -319,6 +339,7 @@ require('lazy').setup({
 
         defaults = {
           layout_strategy = 'horizontal',
+          path_display = { 'smart' },
         },
         extensions = {
           ['ui-select'] = {
@@ -547,6 +568,9 @@ require('lazy').setup({
       --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
+      local settings = {
+        autoformat = false,
+      }
       local servers = {
         -- clangd = {},
         -- gopls = {},
@@ -646,7 +670,7 @@ require('lazy').setup({
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
+        javascript = { 'prettier', 'prettierd', stop_after_first = true },
       },
     },
   },
@@ -804,24 +828,21 @@ require('lazy').setup({
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
-
-      -- Simple and easy statusline.
-      --  You could remove this setup call if you don't like it,
-      --  and try some other statusline plugin
-      local statusline = require 'mini.statusline'
-      -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
-
-      -- You can configure sections in the statusline by overriding their
-      -- default behavior. For example, here we set the section for
-      -- cursor location to LINE:COLUMN
-      ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
+      local starter = require 'mini.starter'
+      starter.setup {
+        autoopen = true,
+        items = {
+          starter.sections.telescope(),
+        },
+        content_hooks = {
+          starter.gen_hook.adding_bullet(),
+          starter.gen_hook.aligning('center', 'center'),
+        },
+      }
+      local starter_open = function()
+        MiniStarter.open()
       end
-
-      -- ... and there is more!
-      --  Check out: https://github.com/echasnovski/mini.nvim
+      starter_open()
     end,
   },
   { -- Highlight, edit, and navigate code
@@ -856,7 +877,7 @@ require('lazy').setup({
 
   -- NOTE: Next step on your Neovim journey: Add/Configure additional plugins for Kickstart
   --
-  --  Here are some example plugins that I've included in the Kickstart repository.
+  -- Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
   require 'kickstart.plugins.debug',

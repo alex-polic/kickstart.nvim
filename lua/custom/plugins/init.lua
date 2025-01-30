@@ -6,4 +6,17 @@ return {
   'pmizio/typescript-tools.nvim',
   dependencies = { 'nvim-lua/plenary.nvim', 'neovim/nvim-lspconfig' },
   opts = {},
+  config = function()
+    local tools = require 'typescript-tools'
+    tools.setup {
+      settings = {
+        tsserver_format_options = {
+          insertSpaceAfterOpeningAndBeforeClosingNonemptyBraces = false,
+        },
+        tsserver_file_preferences = {
+          includeInlayVariableTypeHints = true,
+        },
+      },
+    }
+  end,
 }
