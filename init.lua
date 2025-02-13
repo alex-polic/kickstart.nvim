@@ -26,6 +26,21 @@ else
   rgignore_file:close()
 end
 
+local function toggle_eslint()
+  local clients = vim.lsp.get_active_clients()
+  for _, client in ipairs(clients) do
+    if client.name == 'eslint' then
+      vim.lsp.stop_client(client.id) -- Stop ESLint if running
+      print 'ESLint LSP Disabled'
+      return
+    end
+  end
+  vim.cmd 'LspStart eslint' -- Start ESLint if not running
+  print 'ESLint LSP Enabled'
+end
+
+vim.keymap.set('n', '<leader>le', toggle_eslint, { desc = 'Toggle ESLint LSP' })
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
@@ -332,6 +347,12 @@ require('lazy').setup({
         -- },
         -- pickers = {}
         pickers = {
+          treesitter = {
+            tiebreak = function(current_entry, existing_entry)
+              -- returning true means preferring current entry
+              return current_entry.lnum < existing_entry.lnum
+            end,
+          },
           find_files = {
             path_display = filenameFirst,
           },
@@ -361,7 +382,6 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>st', builtin.treesitter, { desc = '[S]earch [T]reesitter' })
       vim.keymap.set('n', '<leader>sw', builtin.grep_string, { desc = '[S]earch current [W]ord' })
       vim.keymap.set('n', '<leader>sg', builtin.live_grep, { desc = '[S]earch by [G]rep' })
-      vim.keymap.set('n', '<leader>sd', builtin.diagnostics, { desc = '[S]earch [D]iagnostics' })
       vim.keymap.set('n', '<leader>sr', builtin.resume, { desc = '[S]earch [R]esume' })
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
@@ -568,9 +588,6 @@ require('lazy').setup({
       --  - capabilities (table): Override fields in capabilities. Can be used to disable certain LSP features.
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
-      local settings = {
-        autoformat = false,
-      }
       local servers = {
         -- clangd = {},
         -- gopls = {},
@@ -660,7 +677,7 @@ require('lazy').setup({
           lsp_format_opt = 'fallback'
         end
         return {
-          timeout_ms = 500,
+          timeout_ms = 10500,
           lsp_format = lsp_format_opt,
         }
       end,
@@ -670,7 +687,10 @@ require('lazy').setup({
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
-        javascript = { 'prettier', 'prettierd', stop_after_first = true },
+        typescript = { 'prettierd', 'prettier' },
+        typescriptreact = { 'prettierd', 'prettier' },
+        javascript = { 'prettierd', 'prettier' },
+        javascriptreact = { 'prettierd', 'prettier' },
       },
     },
   },
@@ -695,12 +715,12 @@ require('lazy').setup({
           -- `friendly-snippets` contains a variety of premade snippets.
           --    See the README about individual language/framework/plugin snippets:
           --    https://github.com/rafamadriz/friendly-snippets
-          -- {
-          --   'rafamadriz/friendly-snippets',
-          --   config = function()
-          --     require('luasnip.loaders.from_vscode').lazy_load()
-          --   end,
-          -- },
+          {
+            'rafamadriz/friendly-snippets',
+            config = function()
+              require('luasnip.loaders.from_vscode').lazy_load()
+            end,
+          },
         },
       },
       'saadparwaiz1/cmp_luasnip',
@@ -828,21 +848,6 @@ require('lazy').setup({
       -- - sd'   - [S]urround [D]elete [']quotes
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
-      local starter = require 'mini.starter'
-      starter.setup {
-        autoopen = true,
-        items = {
-          starter.sections.telescope(),
-        },
-        content_hooks = {
-          starter.gen_hook.adding_bullet(),
-          starter.gen_hook.aligning('center', 'center'),
-        },
-      }
-      local starter_open = function()
-        MiniStarter.open()
-      end
-      starter_open()
     end,
   },
   { -- Highlight, edit, and navigate code
